@@ -10,4 +10,9 @@ class Fetchme {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
     return version;
   }
+
+  static Future<void> initialize() async {
+    await _channel.invokeMethod("initialize");
+
+  }
 }
