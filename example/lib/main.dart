@@ -59,6 +59,9 @@ class _MyAppState extends State<MyApp> {
               Text('Running on: $_platformVersion\n'),
               ElevatedButton(onPressed: () {
                 Fetchme.initialize();
+                Fetchme.getUpdateStream().listen((event) {
+                  print("the event object:" + event);
+                });
               }, child: const Text("Click"))
             ],
           ),

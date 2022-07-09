@@ -27,6 +27,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
   private Fetch fetchInstance;
 
   private EventChannel eventChannel;
+  private EventChannel.EventSink updateEventSink;
 
 
   @Override
@@ -40,7 +41,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
       @Override
       public void onListen(Object arguments, EventChannel.EventSink events) {
-
+        updateEventSink = events;
+        events.success("Sucsess");
       }
 
       @Override
