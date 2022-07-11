@@ -78,7 +78,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     boolean requiresStorageNotLow = methodCall.argument("requiresStorageNotLow");
 
     // creating the request
-    Request request = new Request(url, context.getFilesDir().getAbsolutePath()+"/"+fileName);
+    Request request = new Request(url, saveDir+"/"+fileName);
     request.setNetworkType(NetworkType.ALL);
     fetchInstance.enqueue(request, success -> {
       Log.d("Fetchme", "success enqueueing the request!");

@@ -3,6 +3,9 @@ package net.omidn.fetchme;
 
 import com.tonyodev.fetch2.Status;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DownloadItem {
     private int id;
     private String url;
@@ -11,7 +14,7 @@ public class DownloadItem {
     private long total;
     private Status status;
     private long downloadedBytesPerSecond;
-    private boolean startDownloadImediately;
+    private boolean startDownloadImmediately;
 
     public DownloadItem(int id, String url, String fileName, long downloaded, long total, Status status, long downloadedBytesPerSecond, boolean startDownloadImediately) {
         this.id = id;
@@ -21,7 +24,7 @@ public class DownloadItem {
         this.total = total;
         this.status = status;
         this.downloadedBytesPerSecond = downloadedBytesPerSecond;
-        this.startDownloadImediately = startDownloadImediately;
+        this.startDownloadImmediately = startDownloadImediately;
     }
 
     public int getId() {
@@ -52,7 +55,22 @@ public class DownloadItem {
         return downloadedBytesPerSecond;
     }
 
-    public boolean isStartDownloadImediately() {
-        return startDownloadImediately;
+    public boolean isStartDownloadImmediately() {
+        return startDownloadImmediately;
+    }
+
+    public Map<String, Object> toMap(){
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("id", id);
+        map.put("url", url);
+        map.put("fileName", fileName);
+        map.put("downloaded", downloaded);
+        map.put("total", total);
+        map.put("status", status);
+        map.put("downloadedBytesPerSecond", downloadedBytesPerSecond);
+        map.put("startDownloadImmediately", startDownloadImmediately);
+
+        return map;
     }
 }

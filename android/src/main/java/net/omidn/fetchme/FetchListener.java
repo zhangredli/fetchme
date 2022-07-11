@@ -23,24 +23,24 @@ public class FetchListener implements com.tonyodev.fetch2.FetchListener {
     @Override
     public void onAdded(@NonNull Download download) {
         Log.d("Fetchme", "onAdded()");
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onCancelled(@NonNull Download download) {
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download));
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onCompleted(@NonNull Download download) {
         Log.d("Fetchme", "onCompleted()");
 
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onDeleted(@NonNull Download download) {
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
@@ -51,39 +51,39 @@ public class FetchListener implements com.tonyodev.fetch2.FetchListener {
     @Override
     public void onError(@NonNull Download download, @NonNull Error error, @Nullable Throwable throwable) {
         Log.d("Fetchme", "onError()");
-        eventSink.error(String.valueOf(error.getValue()), error.toString(), DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.error(String.valueOf(error.getValue()), error.toString(), DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onPaused(@NonNull Download download) {
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onProgress(@NonNull Download download, long l, long l1) {
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onQueued(@NonNull Download download, boolean b) {
         Log.d("Fetchme", "onQueued()");
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onRemoved(@NonNull Download download) {
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onResumed(@NonNull Download download) {
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
     public void onStarted(@NonNull Download download, @NonNull List<? extends DownloadBlock> list, int i) {
         Log.d("Fetchme", "onStarted()");
-        eventSink.success((Object) DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toString());
     }
 
     @Override
