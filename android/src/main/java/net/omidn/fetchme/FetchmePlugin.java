@@ -6,7 +6,9 @@ import androidx.annotation.NonNull;
 
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2core.DefaultStorageResolver;
 
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -42,7 +44,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
       @Override
       public void onListen(Object arguments, EventChannel.EventSink events) {
         updateEventSink = events;
-        events.success("Sucsess");
+        initialize();
+        events.success("Started emitting events!");
       }
 
       @Override
@@ -57,7 +60,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     if (call.method.equals("getPlatformVersion")) {
       result.success("Android " + android.os.Build.VERSION.RELEASE);
     } else if (call.method.equals("initialize")) {
-      initialize(result);
+      initialize();
     }else if (call.method.equals("enqueue")) {
       enqueue(call, result);
     } else {
@@ -75,21 +78,28 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     boolean requiresStorageNotLow = methodCall.argument("requiresStorageNotLow");
 
     // creating the request
-    Request request = new Request(url, fileName);
+    Request request = new Request(url, context.getFilesDir().getAbsolutePath()+"/"+fileName);
+    request.setNetworkType(NetworkType.ALL);
+    fetchInstance.enqueue(request, success -> {
+      Log.d("Fetchme", "success enqueueing the request!");
+    }, error -> {
+      Log.d("Fetchme", "error   "+ error);
+      Log.d("Fetchme", request.toString());
+    });
 
-    fetchInstance.enqueue(request, null, null);
     result.success(request.getId());
-
+    Log.d("Fetchme", "Enqueued the url :"+ url);
   }
 
-  private void initialize(@NonNull Result result) {
+  private void initialize() {
     FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
             .enableLogging(true)
             .setAutoRetryMaxAttempts(1)
+            .setDownloadConcurrentLimit(100)
             .build();
     fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
+    fetchInstance.addListener(new FetchListener(updateEventSink));
     Log.d(FetchmePlugin.class.getName(), "Fetch initialized!");
-    result.success(null);
   }
 
   @Override

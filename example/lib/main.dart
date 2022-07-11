@@ -1,3 +1,4 @@
+import 'package:fetchme_example/utils.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -57,11 +58,13 @@ class _MyAppState extends State<MyApp> {
           child: Column(
             children: [
               Text('Running on: $_platformVersion\n'),
-              ElevatedButton(onPressed: () {
-                Fetchme.initialize();
+              ElevatedButton(onPressed: () async {
+                // await Fetchme.initialize();
                 Fetchme.getUpdateStream().listen((event) {
                   print("the event object:" + event);
                 });
+                await prepare();
+                Fetchme.enqueue("https://dl.pmcmusic.tv/1399/03/Shayea%20%26%20Mehrad%20Hidden%20-%20Mosser%20%5B128%5D.mp3", localPath, "testfile2.txt");
               }, child: const Text("Click"))
             ],
           ),
