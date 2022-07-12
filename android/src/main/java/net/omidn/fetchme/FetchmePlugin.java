@@ -4,11 +4,16 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.DefaultStorageResolver;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -18,92 +23,106 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
-/** FetchmePlugin */
+/**
+ * FetchmePlugin
+ */
 public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
-  private MethodChannel channel;
-  private Context context;
-  private Fetch fetchInstance;
+    /// The MethodChannel that will the communication between Flutter and native Android
+    ///
+    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
+    /// when the Flutter Engine is detached from the Activity
+    private MethodChannel channel;
+    private Context context;
+    private Fetch fetchInstance;
 
-  private EventChannel eventChannel;
-  private EventChannel.EventSink updateEventSink;
+    private EventChannel eventChannel;
+    private EventChannel.EventSink updateEventSink;
 
 
-  @Override
-  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "fetchme");
-    channel.setMethodCallHandler(this);
-    this.context = flutterPluginBinding.getApplicationContext();
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "fetchme");
+        channel.setMethodCallHandler(this);
+        this.context = flutterPluginBinding.getApplicationContext();
 
-    eventChannel= new EventChannel(flutterPluginBinding.getBinaryMessenger(), "net.omidn.fetchme/downloadProgressEventStream");
+        eventChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "net.omidn.fetchme/downloadProgressEventStream");
 
-    eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
-      @Override
-      public void onListen(Object arguments, EventChannel.EventSink events) {
-        updateEventSink = events;
-        initialize();
-        events.success("Started emitting events!");
-      }
+        eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
+            @Override
+            public void onListen(Object arguments, EventChannel.EventSink events) {
+                updateEventSink = events;
+                initialize();
+                events.success("Started emitting events!");
+            }
 
-      @Override
-      public void onCancel(Object arguments) {
+            @Override
+            public void onCancel(Object arguments) {
 
-      }
-    });
-  }
-
-  @Override
-  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    } else if (call.method.equals("initialize")) {
-      initialize();
-    }else if (call.method.equals("enqueue")) {
-      enqueue(call, result);
-    } else {
-      result.notImplemented();
+            }
+        });
     }
-  }
 
-  private void enqueue(MethodCall methodCall, Result result) {
+    @Override
+    public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+        if (call.method.equals("getPlatformVersion")) {
+            result.success("Android " + android.os.Build.VERSION.RELEASE);
+        } else if (call.method.equals("initialize")) {
+            initialize();
+        } else if (call.method.equals("enqueue")) {
+            enqueue(call, result);
+        } else if (call.method.equals("getAllDownloadItems")) {
+            getAllDownloadItems(result);
+        } else {
+            result.notImplemented();
+        }
+    }
 
-    String url = methodCall.argument("url");
-    String saveDir = methodCall.argument("saveDir");
-    String fileName = methodCall.argument("fileName");
-    boolean showNotification = methodCall.argument("showNotification");
-    boolean openFileFromnotification = methodCall.argument("openFileFromNotification");
-    boolean requiresStorageNotLow = methodCall.argument("requiresStorageNotLow");
+    private void enqueue(MethodCall methodCall, Result result) {
 
-    // creating the request
-    Request request = new Request(url, saveDir+"/"+fileName);
-    request.setNetworkType(NetworkType.ALL);
-    fetchInstance.enqueue(request, success -> {
-      Log.d("Fetchme", "success enqueueing the request!");
-    }, error -> {
-      Log.d("Fetchme", "error   "+ error);
-      Log.d("Fetchme", request.toString());
-    });
+        String url = methodCall.argument("url");
+        String saveDir = methodCall.argument("saveDir");
+        String fileName = methodCall.argument("fileName");
+        boolean showNotification = methodCall.argument("showNotification");
+        boolean openFileFromnotification = methodCall.argument("openFileFromNotification");
+        boolean requiresStorageNotLow = methodCall.argument("requiresStorageNotLow");
 
-    result.success(request.getId());
-    Log.d("Fetchme", "Enqueued the url :"+ url);
-  }
+        // creating the request
+        Request request = new Request(url, saveDir + "/" + fileName);
+        request.setNetworkType(NetworkType.ALL);
+        fetchInstance.enqueue(request, success -> {
+            Log.d("Fetchme", "success enqueueing the request!");
+        }, error -> {
+            Log.d("Fetchme", "error   " + error);
+            Log.d("Fetchme", request.toString());
+        });
 
-  private void initialize() {
-    FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
-            .enableLogging(true)
-            .setAutoRetryMaxAttempts(1)
-            .setDownloadConcurrentLimit(100)
-            .build();
-    fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
-    fetchInstance.addListener(new FetchListener(updateEventSink));
-    Log.d(FetchmePlugin.class.getName(), "Fetch initialized!");
-  }
+        result.success(request.getId());
+        Log.d("Fetchme", "Enqueued the url :" + url);
+    }
 
-  @Override
-  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    channel.setMethodCallHandler(null);
-  }
+    private void initialize() {
+        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
+                .enableLogging(true)
+                .setAutoRetryMaxAttempts(1)
+                .setDownloadConcurrentLimit(100)
+                .build();
+        fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
+        fetchInstance.addListener(new FetchListener(updateEventSink));
+        Log.d(FetchmePlugin.class.getName(), "Fetch initialized!");
+    }
+
+    public void getAllDownloadItems(Result result) {
+        fetchInstance.getDownloads(allDownloads -> {
+            List<Map<String, Object>> dList = new ArrayList<>();
+            for (Download d: allDownloads){
+                dList.add(DownloadItemMapper.mapToDownloadItem(d).toMap());
+            }
+            result.success(dList);
+        });
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        channel.setMethodCallHandler(null);
+    }
 }

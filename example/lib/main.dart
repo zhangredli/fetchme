@@ -1,4 +1,5 @@
 import 'package:fetchme_example/utils.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -18,11 +19,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
+  List itemList = [];
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
+
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -56,16 +59,41 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text('Running on: $_platformVersion\n'),
-              ElevatedButton(onPressed: () async {
-                // await Fetchme.initialize();
-                Fetchme.getUpdateStream().listen((event) {
-                  print("the event object:" + event);
-                });
-                await prepare();
-                Fetchme.enqueue("https://dl.pmcmusic.tv/1399/03/Shayea%20%26%20Mehrad%20Hidden%20-%20Mosser%20%5B128%5D.mp3", localPath, "testfile2.txt");
-              }, child: const Text("Click"))
+              ElevatedButton(
+                onPressed: () async {
+                  // await Fetchme.initialize();
+                  Fetchme.getUpdateStream().listen((event) {
+                    // print("the event object:" + event);
+                  });
+                  await prepare();
+                  Fetchme.enqueue(
+                      "https://dl.pmcmusic.tv/1399/03/Shayea%20%26%20Mehrad%20Hidden%20-%20Mosser%20%5B128%5D.mp3",
+                      localPath,
+                      "testfile2.txt");
+                  itemList = await Fetchme.getAllDownloadItems();
+                },
+
+                child: const Text("Click"),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  itemCount: itemList.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      elevation: 5,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(itemList[index]['fileName'])
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),

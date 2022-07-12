@@ -37,4 +37,8 @@ class Fetchme {
   static Stream<dynamic> getUpdateStream() {
     return _eventChannel.receiveBroadcastStream();
   }
+
+  static Future<List> getAllDownloadItems() async{
+    return await _channel.invokeMethod("getAllDownloadItems");
+  }
 }

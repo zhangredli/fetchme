@@ -67,7 +67,7 @@ public class DownloadItem {
         map.put("fileName", fileName);
         map.put("downloaded", downloaded);
         map.put("total", total);
-        map.put("status", status);
+        map.put("status", status.getValue());
         map.put("downloadedBytesPerSecond", downloadedBytesPerSecond);
         map.put("startDownloadImmediately", startDownloadImmediately);
 
