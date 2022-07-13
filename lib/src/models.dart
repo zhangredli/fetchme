@@ -41,9 +41,9 @@ class DownloadItem {
   final bool startDownloadImmediately;
 
 
-  DownloadItem(this.id, this.url, this.fileName, this.downloaded, this.total,
-      this.status, this.downloadedBytesPerSecond,
-      this.startDownloadImmediately);
+  DownloadItem({required this.id, required this.url, required this.fileName, required this.downloaded, required this.total,
+      required this.status, required this.downloadedBytesPerSecond,
+      required this.startDownloadImmediately});
 
 
   Map<String, Object> toMap() {
@@ -59,5 +59,17 @@ class DownloadItem {
     map.putIfAbsent("startDownloadImmediately", () => startDownloadImmediately);
 
     return map;
+  }
+
+  static DownloadItem fromMap(Map<dynamic, dynamic > map){
+    return DownloadItem(
+        id: map['id'] as int,
+        url: map['url'],
+        fileName: map['fileName'],
+        downloaded: map['downloaded'],
+        total: map['total'] as int,
+        status: DownloadTaskStatus.from(map['status'] as int),
+        downloadedBytesPerSecond: map['downloadedBytesPerSecond'] as int,
+        startDownloadImmediately: map['startDownloadImmediately'] as bool);
   }
 }

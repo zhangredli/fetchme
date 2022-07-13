@@ -1,7 +1,11 @@
+library fetchme;
+
 import 'dart:async';
 
 import 'package:fetchme/src/models.dart';
 import 'package:flutter/services.dart';
+
+export 'src/models.dart';
 
 class Fetchme {
   static const MethodChannel _channel = MethodChannel('fetchme');
@@ -17,12 +21,17 @@ class Fetchme {
     await _channel.invokeMethod("initialize");
   }
 
-  static Stream<dynamic> getUpdateStream() {
-    return _eventChannel.receiveBroadcastStream();
+  static Stream<DownloadItem> getUpdateStream() {
+    return _eventChannel.receiveBroadcastStream().map((event) {
+      return DownloadItem.fromMap(event);
+    });
   }
 
-  static Future<List> getAllDownloadItems() async {
-    return await _channel.invokeMethod("getAllDownloadItems");
+  static Future<List<DownloadItem>> getAllDownloadItems() async {
+    return (await _channel.invokeMethod("getAllDownloadItems") as List<dynamic>)
+        .map((e) {
+      return DownloadItem.fromMap(e);
+    }).toList();
   }
 
   static Future<int> enqueue(
@@ -44,7 +53,6 @@ class Fetchme {
   }
 
   static Future<void> pause(int id) async {
-
     try {
       await _channel.invokeMethod('pause', {'id': id});
     } on PlatformException catch (e) {
@@ -53,23 +61,22 @@ class Fetchme {
   }
 
   static Future<void> resume(int id) async {
-
     try {
       await _channel.invokeMethod('resume', {'id': id});
     } on PlatformException catch (e) {
       print(e.message);
     }
   }
-  static Future<void> cancel(int id) async {
 
+  static Future<void> cancel(int id) async {
     try {
       await _channel.invokeMethod('cancel', {'id': id});
     } on PlatformException catch (e) {
       print(e.message);
     }
   }
-  static Future<void> delete(int id) async {
 
+  static Future<void> delete(int id) async {
     try {
       await _channel.invokeMethod('delete', {'id': id});
     } on PlatformException catch (e) {
@@ -78,7 +85,6 @@ class Fetchme {
   }
 
   static Future<void> retry(int id) async {
-
     try {
       await _channel.invokeMethod('resume', {'id': id});
     } on PlatformException catch (e) {
