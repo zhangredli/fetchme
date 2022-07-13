@@ -5,11 +5,13 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.DefaultStorageResolver;
+import com.tonyodev.fetch2core.Func;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,11 +72,65 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             initialize();
         } else if (call.method.equals("enqueue")) {
             enqueue(call, result);
+        } else if (call.method.equals("resume")) {
+            resume(call, result);
+        } else if (call.method.equals("pause")) {
+            pause(call, result);
+        } else if (call.method.equals("cancel")) {
+            cancel(call, result);
+        } else if (call.method.equals("delete")) {
+            delete(call, result);
+        } else if (call.method.equals("retry")) {
+            retry(call, result);
         } else if (call.method.equals("getAllDownloadItems")) {
             getAllDownloadItems(result);
         } else {
             result.notImplemented();
         }
+    }
+
+    private Func<Error> errorFuncForResult(Result result) {
+        return error -> result.error(error.getValue() + "", error.toString(), error.getThrowable().getMessage());
+    }
+
+    private void retry(MethodCall call, Result result) {
+        int downloadId = call.argument("id");
+
+        fetchInstance.retry(downloadId, download -> {
+            result.success(null);
+        }, errorFuncForResult(result));
+    }
+
+    private void delete(MethodCall call, Result result) {
+        int downloadId = call.argument("id");
+
+        fetchInstance.delete(downloadId, download -> {
+            result.success(null);
+        }, errorFuncForResult(result));
+    }
+
+    private void cancel(MethodCall call, Result result) {
+        int downloadId = call.argument("id");
+
+        fetchInstance.cancel(downloadId, download -> {
+            result.success(null);
+        }, errorFuncForResult(result));
+    }
+
+    private void pause(MethodCall call, Result result) {
+        int downloadId = call.argument("id");
+
+        fetchInstance.pause(downloadId, download -> {
+            result.success(null);
+        }, errorFuncForResult(result));
+    }
+
+    private void resume(MethodCall call, Result result) {
+        int downloadId = call.argument("id");
+
+        fetchInstance.resume(downloadId, download -> {
+            result.success(null);
+        }, errorFuncForResult(result));
     }
 
     private void enqueue(MethodCall methodCall, Result result) {
@@ -114,7 +170,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     public void getAllDownloadItems(Result result) {
         fetchInstance.getDownloads(allDownloads -> {
             List<Map<String, Object>> dList = new ArrayList<>();
-            for (Download d: allDownloads){
+            for (Download d : allDownloads) {
                 dList.add(DownloadItemMapper.mapToDownloadItem(d).toMap());
             }
             result.success(dList);

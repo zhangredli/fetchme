@@ -5,7 +5,8 @@ class DownloadTaskStatus {
 
   int get value => _value;
 
-  static DownloadTaskStatus from(int value) => DownloadTaskStatus(value);
+  static DownloadTaskStatus from(int value) =>
+      DownloadTaskStatus(value);
 
   static const none = DownloadTaskStatus(0);
   static const queued = DownloadTaskStatus(1);
@@ -27,4 +28,36 @@ class DownloadTaskStatus {
 
   @override
   String toString() => 'DownloadTaskStatus($_value)';
+}
+
+class DownloadItem {
+  final int id;
+  final String url;
+  final String fileName;
+  final int downloaded;
+  final int total;
+  final DownloadTaskStatus status;
+  final int downloadedBytesPerSecond;
+  final bool startDownloadImmediately;
+
+
+  DownloadItem(this.id, this.url, this.fileName, this.downloaded, this.total,
+      this.status, this.downloadedBytesPerSecond,
+      this.startDownloadImmediately);
+
+
+  Map<String, Object> toMap() {
+    Map<String, Object> map = {};
+
+    map.putIfAbsent('id', () => id);
+    map.putIfAbsent("url", () => url);
+    map.putIfAbsent("fileName", () => fileName);
+    map.putIfAbsent("downloaded", () => downloaded);
+    map.putIfAbsent("total", () => total);
+    map.putIfAbsent("DownloadTaskStatus", () => status.value);
+    map.putIfAbsent("downloadedBytesPerSecond", () => downloadedBytesPerSecond);
+    map.putIfAbsent("startDownloadImmediately", () => startDownloadImmediately);
+
+    return map;
+  }
 }

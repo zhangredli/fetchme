@@ -1,11 +1,12 @@
 import 'dart:async';
 
+import 'package:fetchme/src/models.dart';
 import 'package:flutter/services.dart';
 
 class Fetchme {
   static const MethodChannel _channel = MethodChannel('fetchme');
-  static const EventChannel _eventChannel = EventChannel("net.omidn.fetchme/downloadProgressEventStream");
-
+  static const EventChannel _eventChannel =
+      EventChannel("net.omidn.fetchme/downloadProgressEventStream");
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
@@ -14,6 +15,14 @@ class Fetchme {
 
   static Future<void> initialize() async {
     await _channel.invokeMethod("initialize");
+  }
+
+  static Stream<dynamic> getUpdateStream() {
+    return _eventChannel.receiveBroadcastStream();
+  }
+
+  static Future<List> getAllDownloadItems() async {
+    return await _channel.invokeMethod("getAllDownloadItems");
   }
 
   static Future<int> enqueue(
@@ -34,11 +43,46 @@ class Fetchme {
     });
   }
 
-  static Stream<dynamic> getUpdateStream() {
-    return _eventChannel.receiveBroadcastStream();
+  static Future<void> pause(int id) async {
+
+    try {
+      await _channel.invokeMethod('pause', {'id': id});
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
   }
 
-  static Future<List> getAllDownloadItems() async{
-    return await _channel.invokeMethod("getAllDownloadItems");
+  static Future<void> resume(int id) async {
+
+    try {
+      await _channel.invokeMethod('resume', {'id': id});
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
+  }
+  static Future<void> cancel(int id) async {
+
+    try {
+      await _channel.invokeMethod('cancel', {'id': id});
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
+  }
+  static Future<void> delete(int id) async {
+
+    try {
+      await _channel.invokeMethod('delete', {'id': id});
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
+  }
+
+  static Future<void> retry(int id) async {
+
+    try {
+      await _channel.invokeMethod('resume', {'id': id});
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
   }
 }
