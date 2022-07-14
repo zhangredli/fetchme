@@ -17,8 +17,17 @@ class Fetchme {
     return version;
   }
 
-  static Future<void> initialize() async {
-    await _channel.invokeMethod("initialize");
+  static Future<void> initialize(
+      {bool loggingEnabled = true,
+      int autoRetryAttemps = 1,
+      int concurrentDownloads = 3,
+      int progressInterval = 1500}) async {
+    await _channel.invokeMethod("initialize", {
+      "loggingEnabled": loggingEnabled,
+      "autoRetryAttempts": autoRetryAttemps,
+      "concurrentDownloads": concurrentDownloads,
+      "progressInterval": progressInterval,
+    });
   }
 
   static Stream<DownloadItem> getUpdateStream() {
@@ -34,7 +43,7 @@ class Fetchme {
     }).toList();
   }
 
-  static Future<int> enqueue(
+  static Future<DownloadItem> enqueue(
     String url,
     String savedDir,
     String? fileName, {
@@ -42,14 +51,14 @@ class Fetchme {
     bool openFileFromNotification = true,
     bool requiresStorageNotLow = true,
   }) async {
-    return await _channel.invokeMethod('enqueue', {
+    return DownloadItem.fromMap(await _channel.invokeMethod('enqueue', {
       'url': url,
       'saveDir': savedDir,
       'fileName': fileName,
       'showNotification': showNotification,
       'openFileFromNotification': openFileFromNotification,
       'requiresStorageNotLow': requiresStorageNotLow,
-    });
+    }));
   }
 
   static Future<void> pause(int id) async {

@@ -10,7 +10,6 @@ import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
-import com.tonyodev.fetch2core.DefaultStorageResolver;
 import com.tonyodev.fetch2core.Func;
 
 import java.util.ArrayList;
@@ -53,7 +52,9 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             @Override
             public void onListen(Object arguments, EventChannel.EventSink events) {
                 updateEventSink = events;
-                initialize();
+                if (fetchInstance.getListenerSet().size() == 0) {
+                    fetchInstance.addListener(new FetchListener(updateEventSink));
+                }
                 events.success("Started emitting events!");
             }
 
@@ -69,7 +70,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         if (call.method.equals("getPlatformVersion")) {
             result.success("Android " + android.os.Build.VERSION.RELEASE);
         } else if (call.method.equals("initialize")) {
-            initialize();
+            initialize(call, result);
         } else if (call.method.equals("enqueue")) {
             enqueue(call, result);
         } else if (call.method.equals("resume")) {
@@ -152,19 +153,22 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             Log.d("Fetchme", request.toString());
         });
 
-        result.success(request.getId());
+        fetchInstance.getDownload(request.getId(), download -> {
+            result.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
+        });
         Log.d("Fetchme", "Enqueued the url :" + url);
     }
 
-    private void initialize() {
+    private void initialize(MethodCall methodCall, Result result) {
         FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
-                .enableLogging(true)
-                .setAutoRetryMaxAttempts(1)
-                .setDownloadConcurrentLimit(100)
+                .enableLogging(n(methodCall.argument("loggingEnabled"), true))
+                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 1))
+                .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
+                .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
                 .build();
         fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
-        fetchInstance.addListener(new FetchListener(updateEventSink));
-        Log.d(FetchmePlugin.class.getName(), "Fetch initialized!");
+        Log.d(FetchmePlugin.class.getName(), "Fetchme initialized!");
+        result.success(null);
     }
 
     public void getAllDownloadItems(Result result) {
@@ -180,5 +184,10 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         channel.setMethodCallHandler(null);
+    }
+
+    private <T> T n(T t1, T t2) {
+        if (t1 == null) return t2;
+        return t1;
     }
 }
