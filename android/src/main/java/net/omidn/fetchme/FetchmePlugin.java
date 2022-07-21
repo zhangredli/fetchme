@@ -85,6 +85,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             retry(call, result);
         } else if (call.method.equals("getAllDownloadItems")) {
             getAllDownloadItems(result);
+        } else if (call.method.equals("getDownloadItem")) {
+            getDownloadItem(call, result);
         } else {
             result.notImplemented();
         }
@@ -153,9 +155,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             Log.d("Fetchme", request.toString());
         });
 
-        fetchInstance.getDownload(request.getId(), download -> {
-            result.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
-        });
+        result.success(request.getId());
         Log.d("Fetchme", "Enqueued the url :" + url);
     }
 
@@ -179,6 +179,15 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             }
             result.success(dList);
         });
+    }
+
+    public void getDownloadItem(MethodCall call, Result result) {
+        Integer id = call.argument("id");
+        fetchInstance.getDownload(id, download -> {
+            result.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
+        });
+        result.error("404", "Download with id " + id + " nor found!",
+                null);
     }
 
     @Override

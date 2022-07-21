@@ -83,7 +83,7 @@ public class FetchListener implements com.tonyodev.fetch2.FetchListener {
     @Override
     public void onStarted(@NonNull Download download, @NonNull List<? extends DownloadBlock> list, int i) {
         Log.d("Fetchme", "onStarted()");
-        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toString());
+        eventSink.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override
