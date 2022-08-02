@@ -5,16 +5,15 @@ class DownloadTaskStatus {
 
   int get value => _value;
 
-  static DownloadTaskStatus from(int value) =>
-      DownloadTaskStatus(value);
+  static DownloadTaskStatus from(int value) => DownloadTaskStatus(value);
 
   static const none = DownloadTaskStatus(0);
   static const queued = DownloadTaskStatus(1);
   static const running = DownloadTaskStatus(2);
-  static const complete = DownloadTaskStatus(3);
-  static const failed = DownloadTaskStatus(4);
+  static const paused = DownloadTaskStatus(3);
+  static const complete = DownloadTaskStatus(4);
+  static const failed = DownloadTaskStatus(6);
   static const canceled = DownloadTaskStatus(5);
-  static const paused = DownloadTaskStatus(6);
 
   @override
   bool operator ==(Object other) {
@@ -40,11 +39,15 @@ class DownloadItem {
   final int downloadedBytesPerSecond;
   final bool startDownloadImmediately;
 
-
-  DownloadItem({required this.id, required this.url, required this.fileName, required this.downloaded, required this.total,
-      required this.status, required this.downloadedBytesPerSecond,
+  DownloadItem(
+      {required this.id,
+      required this.url,
+      required this.fileName,
+      required this.downloaded,
+      required this.total,
+      required this.status,
+      required this.downloadedBytesPerSecond,
       required this.startDownloadImmediately});
-
 
   Map<String, Object> toMap() {
     Map<String, Object> map = {};
@@ -61,7 +64,7 @@ class DownloadItem {
     return map;
   }
 
-  static DownloadItem fromMap(Map<dynamic, dynamic > map){
+  static DownloadItem fromMap(Map<dynamic, dynamic> map) {
     return DownloadItem(
         id: map['id'] as int,
         url: map['url'],
@@ -72,4 +75,42 @@ class DownloadItem {
         downloadedBytesPerSecond: map['downloadedBytesPerSecond'] as int,
         startDownloadImmediately: map['startDownloadImmediately'] as bool);
   }
+}
+
+
+enum FetchError {
+  unknown,
+  none,
+  fileNotCreated,
+  connectionTimedOut,
+  unknownHost,
+  httpNotFound,
+  writePermissionDenied,
+  noStorageSpace,
+  noNetworkConnection,
+  emptyResponseFromServer,
+  requestAlreadyExist,
+  downloadNotFound,
+  fetchDatabaseError,
+  requestWithIdAlreadyExist,
+  requestWithFilePathAlreadyExist,
+  requestNotSuccessful,
+  unknownIoError,
+  fileNotFound,
+  fetchFileServerUrlInvalid,
+  invalidContentHash,
+  failedToUpdateRequest,
+  failedToAddCompletedDownload,
+  fetchFileServerInvalidResponse,
+  requestDoesNotExist,
+  enqueueNotSuccessful,
+  completedNotAddedSuccessfully,
+  enqueuedRequestsAreNotDistinct,
+  failedToRenameIncompleteDownloadFile,
+  failedToRenameFile,
+  fileAllocationFailed,
+  httpConnectionNotAllowed
+}
+extension _ErrorExt on FetchError{
+
 }

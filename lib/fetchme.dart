@@ -43,7 +43,11 @@ class Fetchme {
     }).toList();
   }
 
-  static Future<DownloadItem> enqueue(
+  static Future<DownloadItem> getDownloadItem({required int id}) async {
+    return DownloadItem.fromMap(await _channel.invokeMethod("getDownloadItem"));
+  }
+
+  static Future<int> enqueue(
     String url,
     String savedDir,
     String? fileName, {
@@ -51,17 +55,17 @@ class Fetchme {
     bool openFileFromNotification = true,
     bool requiresStorageNotLow = true,
   }) async {
-    return DownloadItem.fromMap(await _channel.invokeMethod('enqueue', {
+    return await _channel.invokeMethod('enqueue', {
       'url': url,
       'saveDir': savedDir,
       'fileName': fileName,
       'showNotification': showNotification,
       'openFileFromNotification': openFileFromNotification,
       'requiresStorageNotLow': requiresStorageNotLow,
-    }));
+    });
   }
 
-  static Future<void> pause(int id) async {
+  static Future<void> pause({required int id}) async {
     try {
       await _channel.invokeMethod('pause', {'id': id});
     } on PlatformException catch (e) {
@@ -69,7 +73,7 @@ class Fetchme {
     }
   }
 
-  static Future<void> resume(int id) async {
+  static Future<void> resume({required int id}) async {
     try {
       await _channel.invokeMethod('resume', {'id': id});
     } on PlatformException catch (e) {
@@ -77,7 +81,7 @@ class Fetchme {
     }
   }
 
-  static Future<void> cancel(int id) async {
+  static Future<void> cancel({required int id}) async {
     try {
       await _channel.invokeMethod('cancel', {'id': id});
     } on PlatformException catch (e) {
@@ -85,15 +89,22 @@ class Fetchme {
     }
   }
 
-  static Future<void> delete(int id) async {
+  static Future<void> delete({required int id}) async {
     try {
       await _channel.invokeMethod('delete', {'id': id});
     } on PlatformException catch (e) {
       print(e.message);
     }
   }
+  static Future<void> remove({required int id}) async {
+    try {
+      await _channel.invokeMethod('remove', {'id': id});
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
+  }
 
-  static Future<void> retry(int id) async {
+  static Future<void> retry({required int id}) async {
     try {
       await _channel.invokeMethod('resume', {'id': id});
     } on PlatformException catch (e) {

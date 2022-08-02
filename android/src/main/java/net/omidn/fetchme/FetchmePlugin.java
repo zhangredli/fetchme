@@ -81,6 +81,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             cancel(call, result);
         } else if (call.method.equals("delete")) {
             delete(call, result);
+        } else if(call.method.equals("remove")){
+            remove(call, result);
         } else if (call.method.equals("retry")) {
             retry(call, result);
         } else if (call.method.equals("getAllDownloadItems")) {
@@ -92,8 +94,9 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         }
     }
 
+
     private Func<Error> errorFuncForResult(Result result) {
-        return error -> result.error(error.getValue() + "", error.toString(), error.getThrowable().getMessage());
+        return error -> result.error(error.getValue() + "", error.toString(), error.getThrowable());
     }
 
     private void retry(MethodCall call, Result result) {
@@ -108,6 +111,13 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         int downloadId = call.argument("id");
 
         fetchInstance.delete(downloadId, download -> {
+            result.success(null);
+        }, errorFuncForResult(result));
+    }
+    private void remove(MethodCall call, Result result) {
+        int downloadId = call.argument("id");
+
+        fetchInstance.remove(downloadId, download -> {
             result.success(null);
         }, errorFuncForResult(result));
     }
