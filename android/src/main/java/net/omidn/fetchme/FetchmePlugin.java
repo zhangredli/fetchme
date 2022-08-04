@@ -1,6 +1,7 @@
 package net.omidn.fetchme;
 
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.annotation.NonNull;
 
@@ -81,7 +82,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             cancel(call, result);
         } else if (call.method.equals("delete")) {
             delete(call, result);
-        } else if(call.method.equals("remove")){
+        } else if (call.method.equals("remove")) {
             remove(call, result);
         } else if (call.method.equals("retry")) {
             retry(call, result);
@@ -89,6 +90,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             getAllDownloadItems(result);
         } else if (call.method.equals("getDownloadItem")) {
             getDownloadItem(call, result);
+        } else if (call.method.equals("openFile")){
+            openDownloadedFile(call, result);
         } else {
             result.notImplemented();
         }
@@ -114,6 +117,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             result.success(null);
         }, errorFuncForResult(result));
     }
+
     private void remove(MethodCall call, Result result) {
         int downloadId = call.argument("id");
 
@@ -198,6 +202,26 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         });
         result.error("404", "Download with id " + id + " nor found!",
                 null);
+    }
+
+    public void openDownloadedFile(MethodCall call, Result result) {
+        Integer id = call.argument("id");
+        Download download;
+        fetchInstance.getDownload(id, result1 -> {
+            if (result1==null){
+                result.error("DOWNLOAD_NOT_FOUND", "Downloaded file was not found!", null);
+                return;
+            }
+            String saveFilePath = result1.getFile();
+            Intent intent = IntentUtils.validatedFileIntent(context, saveFilePath, null);
+            if (intent != null) {
+                context.startActivity(intent);
+                result.success(true);
+            } else {
+                result.success(false);
+            }
+        });
+
     }
 
     @Override

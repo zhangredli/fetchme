@@ -111,4 +111,8 @@ class Fetchme {
       print(e.message);
     }
   }
+  static Future<bool> openFile({required int id}) async{
+    bool canOpen = await _channel.invokeMethod('openFile', {'id': id});
+    return canOpen;
+  }
 }
