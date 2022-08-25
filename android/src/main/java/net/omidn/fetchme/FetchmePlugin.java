@@ -5,10 +5,12 @@ import android.content.Intent;
 
 import androidx.annotation.NonNull;
 
+import com.tonyodev.fetch2.DefaultFetchNotificationManager;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2.FetchNotificationManager;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.Func;
@@ -89,11 +91,33 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             getAllDownloadItems(result);
         } else if (call.method.equals("getDownloadItem")) {
             getDownloadItem(call, result);
-        } else if (call.method.equals("openFile")){
+        } else if (call.method.equals("openFile")) {
             openDownloadedFile(call, result);
+        } else if (call.method.equals("setSettings")) {
+            setSettings(call, result);
         } else {
             result.notImplemented();
         }
+
+    }
+
+    private void setSettings(MethodCall methodCall, Result result) {
+        Boolean onlyWiFi = methodCall.argument("onlyWiFi");
+        NetworkType networkType = onlyWiFi ? NetworkType.WIFI_ONLY : NetworkType.ALL;
+        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
+                .enableLogging(n(methodCall.argument("loggingEnabled"), true))
+                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 1))
+                .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
+                .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
+                .setGlobalNetworkType(networkType)
+                .build();
+
+        fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
+        Log.d(FetchmePlugin.class.getName(), "Fetch reset configuration!");
+        Log.d(FetchmePlugin.class.getName(), "Fetch networkType! = "+ networkType);
+
+        result.success(null);
+
     }
 
 
@@ -150,6 +174,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     }
 
     private void enqueue(MethodCall methodCall, Result result) {
+        Log.d(FetchmePlugin.class.getName(), "*******    Fetch networkType! = "+ fetchInstance.getFetchConfiguration().getGlobalNetworkType());
 
         String url = methodCall.argument("url");
         String saveDir = methodCall.argument("saveDir");
@@ -160,7 +185,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
 
         // creating the request
         Request request = new Request(url, saveDir + "/" + fileName);
-        request.setNetworkType(NetworkType.ALL);
+        request.setNetworkType(fetchInstance.getFetchConfiguration().getGlobalNetworkType());
         fetchInstance.enqueue(request, success -> {
             Log.d("Fetchme", "success enqueueing the request!");
         }, error -> {
@@ -207,7 +232,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         Integer id = call.argument("id");
         Download download;
         fetchInstance.getDownload(id, result1 -> {
-            if (result1==null){
+            if (result1 == null) {
                 result.error("DOWNLOAD_NOT_FOUND", "Downloaded file was not found!", null);
                 return;
             }

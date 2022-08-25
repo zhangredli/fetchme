@@ -49,7 +49,6 @@ class Fetchme {
 
   static Stream<DownloadItem> getUpdateStream() {
     return _eventChannel.receiveBroadcastStream().map((event) {
-      print("this is causing errror!@@@@@    " + event.toString());
       return DownloadItem.fromMap(event);
     });
   }
