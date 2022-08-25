@@ -30,8 +30,26 @@ class Fetchme {
     });
   }
 
+  static Future<void> setSettings(
+      {bool loggingEnabled = true,
+      int autoRetryAttemps = 1,
+      int concurrentDownloads = 3,
+      bool onlyWiFi = false,
+      int progressInterval = 1500,
+      bool onlySendFinishNotification = false}) async {
+    await _channel.invokeMethod('setSettings', {
+      "onlyWiFi": onlyWiFi,
+      "onlySendFinishNotification": onlySendFinishNotification,
+      "loggingEnabled": loggingEnabled,
+      "autoRetryAttempts": autoRetryAttemps,
+      "concurrentDownloads": concurrentDownloads,
+      "progressInterval": progressInterval,
+    });
+  }
+
   static Stream<DownloadItem> getUpdateStream() {
     return _eventChannel.receiveBroadcastStream().map((event) {
+      print("this is causing errror!@@@@@    " + event.toString());
       return DownloadItem.fromMap(event);
     });
   }
@@ -96,6 +114,7 @@ class Fetchme {
       print(e.message);
     }
   }
+
   static Future<void> remove({required int id}) async {
     try {
       await _channel.invokeMethod('remove', {'id': id});
@@ -111,7 +130,8 @@ class Fetchme {
       print(e.message);
     }
   }
-  static Future<bool> openFile({required int id}) async{
+
+  static Future<bool> openFile({required int id}) async {
     bool canOpen = await _channel.invokeMethod('openFile', {'id': id});
     return canOpen;
   }

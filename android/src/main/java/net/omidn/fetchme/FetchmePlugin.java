@@ -56,7 +56,6 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
                 if (fetchInstance.getListenerSet().size() == 0) {
                     fetchInstance.addListener(new FetchListener(updateEventSink));
                 }
-                events.success("Started emitting events!");
             }
 
             @Override
