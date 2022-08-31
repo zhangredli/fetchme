@@ -1,11 +1,11 @@
 package net.omidn.fetchme;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
 import androidx.annotation.NonNull;
 
-import com.tonyodev.fetch2.DefaultFetchNotificationManager;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
@@ -15,6 +15,8 @@ import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.Func;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,8 @@ import io.flutter.plugin.common.MethodChannel.Result;
  * FetchmePlugin
  */
 public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
+    FetchNotificationManager notificationManager;
+
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -38,6 +42,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     private MethodChannel channel;
     private Context context;
     private Fetch fetchInstance;
+    FetchConfiguration.Builder fetchConfigBuilder;
 
     private EventChannel eventChannel;
     private EventChannel.EventSink updateEventSink;
@@ -65,6 +70,13 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
 
             }
         });
+        notificationManager = new MyDefaultFetchNotificationManager(context) {
+            @NonNull
+            @Override
+            public Fetch getFetchInstanceForNamespace(@NonNull String namespace) {
+                return fetchInstance;
+            }
+        } ;
     }
 
     @Override
@@ -104,17 +116,18 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     private void setSettings(MethodCall methodCall, Result result) {
         Boolean onlyWiFi = methodCall.argument("onlyWiFi");
         NetworkType networkType = onlyWiFi ? NetworkType.WIFI_ONLY : NetworkType.ALL;
-        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
+        fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
                 .enableLogging(n(methodCall.argument("loggingEnabled"), true))
                 .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 1))
                 .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
                 .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
                 .setGlobalNetworkType(networkType)
+                .setNotificationManager(notificationManager);
+        FetchConfiguration fetchConfiguration = fetchConfigBuilder
                 .build();
 
         fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
         Log.d(FetchmePlugin.class.getName(), "Fetch reset configuration!");
-        Log.d(FetchmePlugin.class.getName(), "Fetch networkType! = "+ networkType);
 
         result.success(null);
 
@@ -174,15 +187,10 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     }
 
     private void enqueue(MethodCall methodCall, Result result) {
-        Log.d(FetchmePlugin.class.getName(), "*******    Fetch networkType! = "+ fetchInstance.getFetchConfiguration().getGlobalNetworkType());
 
         String url = methodCall.argument("url");
         String saveDir = methodCall.argument("saveDir");
         String fileName = methodCall.argument("fileName");
-        boolean showNotification = methodCall.argument("showNotification");
-        boolean openFileFromnotification = methodCall.argument("openFileFromNotification");
-        boolean requiresStorageNotLow = methodCall.argument("requiresStorageNotLow");
-
         // creating the request
         Request request = new Request(url, saveDir + "/" + fileName);
         request.setNetworkType(fetchInstance.getFetchConfiguration().getGlobalNetworkType());
@@ -198,13 +206,14 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     }
 
     private void initialize(MethodCall methodCall, Result result) {
-        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(this.context)
+        fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
                 .enableLogging(n(methodCall.argument("loggingEnabled"), true))
                 .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 1))
                 .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
                 .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
-                .build();
-        fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
+                .setNotificationManager(notificationManager);
+
+        fetchInstance = Fetch.Impl.getInstance(fetchConfigBuilder.build());
         Log.d(FetchmePlugin.class.getName(), "Fetchme initialized!");
         result.success(null);
     }
