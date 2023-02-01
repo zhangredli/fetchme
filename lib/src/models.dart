@@ -39,15 +39,14 @@ class DownloadItem {
   final int downloadedBytesPerSecond;
   final bool startDownloadImmediately;
 
-  DownloadItem(
-      {required this.id,
-      required this.url,
-      required this.fileName,
-      required this.downloaded,
-      required this.total,
-      required this.status,
-      required this.downloadedBytesPerSecond,
-      required this.startDownloadImmediately});
+  DownloadItem({required this.id,
+    required this.url,
+    required this.fileName,
+    required this.downloaded,
+    required this.total,
+    required this.status,
+    required this.downloadedBytesPerSecond,
+    required this.startDownloadImmediately});
 
   Map<String, Object> toMap() {
     Map<String, Object> map = {};
@@ -113,4 +112,72 @@ enum FetchError {
 }
 extension _ErrorExt on FetchError{
 
+  FetchError getByCode(int code) {
+    switch (code) {
+      case -1:
+        return FetchError.unknown;
+      case 0:
+        return FetchError.none;
+      case 1:
+        return FetchError.fileNotFound;
+      case 2:
+        return FetchError.connectionTimedOut;
+      case 3:
+        return FetchError.unknownHost;
+      case 4:
+        return FetchError.httpNotFound;
+      case 5:
+        return FetchError.writePermissionDenied;
+      case 6:
+        return FetchError.noStorageSpace;
+      case 7:
+        return FetchError.noNetworkConnection;
+      case 8:
+        return FetchError.emptyResponseFromServer;
+      case 9:
+        return FetchError.requestAlreadyExist;
+      case 10:
+        return FetchError.downloadNotFound;
+      case 11:
+        return FetchError.fetchDatabaseError;
+      case 13:
+        return FetchError.requestWithIdAlreadyExist;
+      case 14:
+        return FetchError.requestWithFilePathAlreadyExist;
+      case 15:
+        return FetchError.requestNotSuccessful;
+      case 16:
+        return FetchError.unknownIoError;
+      case 17:
+        return FetchError.fileNotFound;
+      case 19:
+        return FetchError.fetchFileServerUrlInvalid;
+      case 20:
+        return FetchError.invalidContentHash;
+      case 21:
+        return FetchError.failedToUpdateRequest;
+      case 22:
+        return FetchError.failedToAddCompletedDownload;
+      case 23:
+        return FetchError.fetchFileServerInvalidResponse;
+      case 24:
+        return FetchError.requestDoesNotExist;
+      case 25:
+        return FetchError.enqueueNotSuccessful;
+      case 26:
+        return FetchError.completedNotAddedSuccessfully;
+      case 27:
+        return FetchError.enqueuedRequestsAreNotDistinct;
+      case 28:
+        return FetchError.failedToRenameIncompleteDownloadFile;
+      case 29:
+        return FetchError.failedToRenameFile;
+      case 30:
+        return FetchError.fileAllocationFailed;
+      case 31:
+        return FetchError.httpConnectionNotAllowed;
+      default:
+        return FetchError.unknown;
+    }
+  }
 }

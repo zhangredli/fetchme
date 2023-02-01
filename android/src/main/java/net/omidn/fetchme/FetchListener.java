@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
+import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2core.DownloadBlock;
 
 import java.util.List;
@@ -14,10 +15,12 @@ import io.flutter.plugin.common.EventChannel;
 
 public class FetchListener implements com.tonyodev.fetch2.FetchListener {
     private EventChannel.EventSink eventSink;
+    private Fetch fetch;
 
-    public FetchListener(EventChannel.EventSink eventChannel) {
+    public FetchListener(EventChannel.EventSink eventChannel, Fetch fetch) {
         this.eventSink = eventChannel;
-        Log.d("Fetchme", "Fetch listener is construcetd!");
+        this.fetch = fetch;
+        Log.d("Fetchme", "Fetch listener is constructed!");
     }
 
     @Override
@@ -50,8 +53,8 @@ public class FetchListener implements com.tonyodev.fetch2.FetchListener {
 
     @Override
     public void onError(@NonNull Download download, @NonNull Error error, @Nullable Throwable throwable) {
-        Log.d("Fetchme", "onError()");
-        eventSink.error(String.valueOf(error.getValue()), error.toString(), DownloadItemMapper.mapToDownloadItem(download).toMap());
+        Log.d("Fetchme", "onError() code: " + error.getValue());
+        eventSink.error(error.getValue() + "", error.toString(), DownloadItemMapper.mapToDownloadItem(download).toMap());
     }
 
     @Override

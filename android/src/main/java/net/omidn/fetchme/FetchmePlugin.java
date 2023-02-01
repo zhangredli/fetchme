@@ -1,6 +1,5 @@
 package net.omidn.fetchme;
 
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
@@ -14,9 +13,10 @@ import com.tonyodev.fetch2.FetchNotificationManager;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.Func;
+import com.tonyodev.fetch2okhttp.OkHttpDownloader;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +28,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import okhttp3.OkHttpClient;
 
 /**
  * FetchmePlugin
@@ -43,6 +44,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     private Context context;
     private Fetch fetchInstance;
     FetchConfiguration.Builder fetchConfigBuilder;
+    OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
     private EventChannel eventChannel;
     private EventChannel.EventSink updateEventSink;
@@ -61,7 +63,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             public void onListen(Object arguments, EventChannel.EventSink events) {
                 updateEventSink = events;
                 if (fetchInstance.getListenerSet().size() == 0) {
-                    fetchInstance.addListener(new FetchListener(updateEventSink));
+                    fetchInstance.addListener(new FetchListener(updateEventSink, fetchInstance));
                 }
             }
 
@@ -76,7 +78,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             public Fetch getFetchInstanceForNamespace(@NonNull String namespace) {
                 return fetchInstance;
             }
-        } ;
+        };
     }
 
     @Override
@@ -103,10 +105,14 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             getAllDownloadItems(result);
         } else if (call.method.equals("getDownloadItem")) {
             getDownloadItem(call, result);
+        } else if (call.method.equals("updateRequest")) {
+            updateRequest(call, result);
         } else if (call.method.equals("openFile")) {
             openDownloadedFile(call, result);
         } else if (call.method.equals("setSettings")) {
             setSettings(call, result);
+        } else if (call.method.equals("pauseAll")) {
+            pauseAll(result);
         } else {
             result.notImplemented();
         }
@@ -118,11 +124,12 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         NetworkType networkType = onlyWiFi ? NetworkType.WIFI_ONLY : NetworkType.ALL;
         fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
                 .enableLogging(n(methodCall.argument("loggingEnabled"), true))
-                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 1))
+                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 0))
                 .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
                 .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
                 .setGlobalNetworkType(networkType)
                 .setNotificationManager(notificationManager);
+//                .setHttpDownloader(new OkHttpDownloader(okHttpClient));
         FetchConfiguration fetchConfiguration = fetchConfigBuilder
                 .build();
 
@@ -133,6 +140,29 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
 
     }
 
+    private void updateRequest(MethodCall call, Result result) {
+        fetchInstance.getDownload(call.argument("id"), download -> {
+            // url error.
+            String newUrl = call.argument("newUrl");
+            Request request = new Request(newUrl, download.getFile());
+            //update other request fields.
+            fetchInstance.updateRequest(download.getId(), request, true, new Func<Download>() {
+                @Override
+                public void call(@NotNull Download result) {
+                    //updated/
+                }
+            }, new Func<Error>() {
+                @Override
+                public void call(@NotNull Error result) {
+                    //failed to update
+                }
+            });
+        });
+    }
+
+    private static class MYCD extends OkHttpDownloader {
+
+    }
 
     private Func<Error> errorFuncForResult(Result result) {
         return error -> result.error(error.getValue() + "", error.toString(), error.getThrowable());
@@ -140,6 +170,7 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
 
     private void retry(MethodCall call, Result result) {
         int downloadId = call.argument("id");
+        Log.d("Fethcme", "fetch retry: " + downloadId);
 
         fetchInstance.retry(downloadId, download -> {
             result.success(null);
@@ -196,22 +227,24 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         request.setNetworkType(fetchInstance.getFetchConfiguration().getGlobalNetworkType());
         fetchInstance.enqueue(request, success -> {
             Log.d("Fetchme", "success enqueueing the request!");
+            result.success(success.getId());
         }, error -> {
             Log.d("Fetchme", "error   " + error);
             Log.d("Fetchme", request.toString());
         });
 
-        result.success(request.getId());
         Log.d("Fetchme", "Enqueued the url :" + url);
     }
 
     private void initialize(MethodCall methodCall, Result result) {
+
         fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
                 .enableLogging(n(methodCall.argument("loggingEnabled"), true))
-                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 1))
+                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 0))
                 .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
                 .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
                 .setNotificationManager(notificationManager);
+//                .setHttpDownloader(new OkHttpDownloader(okHttpClient));
 
         fetchInstance = Fetch.Impl.getInstance(fetchConfigBuilder.build());
         Log.d(FetchmePlugin.class.getName(), "Fetchme initialized!");
@@ -255,6 +288,11 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             }
         });
 
+    }
+
+    public void pauseAll(Result result) {
+        fetchInstance.pauseAll();
+        result.success(null);
     }
 
     @Override

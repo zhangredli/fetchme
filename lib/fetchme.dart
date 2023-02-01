@@ -47,10 +47,8 @@ class Fetchme {
     });
   }
 
-  static Stream<DownloadItem> getUpdateStream() {
-    return _eventChannel.receiveBroadcastStream().map((event) {
-      return DownloadItem.fromMap(event);
-    });
+  static Stream getUpdateStream() {
+    return _eventChannel.receiveBroadcastStream();
   }
 
   static Future<List<DownloadItem>> getAllDownloadItems() async {
@@ -124,10 +122,14 @@ class Fetchme {
 
   static Future<void> retry({required int id}) async {
     try {
-      await _channel.invokeMethod('resume', {'id': id});
+      await _channel.invokeMethod('retry', {'id': id});
     } on PlatformException catch (e) {
       print(e.message);
     }
+  }
+
+  static Future<void> pauseAll() async{
+    await _channel.invokeMethod("pauseAll");
   }
 
   static Future<bool> openFile({required int id}) async {
