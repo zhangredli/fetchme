@@ -143,17 +143,20 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     private void updateRequest(MethodCall call, Result result) {
         fetchInstance.getDownload(call.argument("id"), download -> {
             // url error.
+            android.util.Log.d("Fetchme", "updateRequest: called");
             String newUrl = call.argument("newUrl");
             Request request = new Request(newUrl, download.getFile());
             //update other request fields.
             fetchInstance.updateRequest(download.getId(), request, true, new Func<Download>() {
                 @Override
-                public void call(@NotNull Download result) {
-                    //updated/
+                public void call(@NotNull Download newDownload) {
+                    android.util.Log.d("Fetchme", "download id: new(" + newDownload.getId() + ")  old(" + download.getId() + ")");
+                    result.success(DownloadItemMapper.mapToDownloadItem(newDownload).toMap());
                 }
             }, new Func<Error>() {
                 @Override
-                public void call(@NotNull Error result) {
+                public void call(@NotNull Error err) {
+                    result.error(err.getValue() + "", err.name(), err);
                     //failed to update
                 }
             });
