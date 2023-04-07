@@ -1,6 +1,7 @@
 library fetchme;
 
 import 'dart:async';
+import 'dart:math';
 
 import 'package:fetchme/src/models.dart';
 import 'package:flutter/services.dart';
@@ -25,7 +26,7 @@ class Fetchme {
       "loggingEnabled": loggingEnabled,
       "autoRetryAttempts": autoRetryAttemps,
       "concurrentDownloads": concurrentDownloads,
-      "progressInterval": progressInterval,
+      "progressInterval": max(300, progressInterval),
     });
   }
 
