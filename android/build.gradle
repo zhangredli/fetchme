@@ -35,6 +35,6 @@ android {
     }
 }
 dependencies {
-    implementation "com.tonyodev.fetch2:fetch2:3.0.12"
-    implementation "com.tonyodev.fetch2okhttp:fetch2okhttp:3.0.12"
+    implementation "com.github.tonyofrancis.Fetch:fetch2:3.0.12-release"
+    implementation "com.github.tonyofrancis.Fetch:fetch2okhttp:3.0.12-release"
 }
