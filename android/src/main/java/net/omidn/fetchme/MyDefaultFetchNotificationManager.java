@@ -420,7 +420,7 @@ public abstract class MyDefaultFetchNotificationManager implements FetchNotifica
         Intrinsics.checkNotNullParameter(download, "download");
         String title = download.getExtras() != null ? download.getExtras().getString("title","") : "";
         if(!title.isEmpty()) {
-            return title;
+            return "Quest助手 - 资源下载：" + title;
         }
         String var10000 = download.getFileUri().getLastPathSegment();
         if (var10000 == null) {
@@ -457,7 +457,7 @@ public abstract class MyDefaultFetchNotificationManager implements FetchNotifica
             var10000 = context.getString(string.fetch_notification_download_downloading);
             Intrinsics.checkNotNullExpressionValue(var10000, "context.getString(R.stri…ion_download_downloading)");
         } else {
-            var10000 = this.getEtaText(context, downloadNotification.getEtaInMilliSeconds());
+            var10000 = "下载进度："+this.getProgress(context,downloadNotification.getTotal(),downloadNotification.getDownloaded()) + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0速度：" + this.getSpeedText(context,downloadNotification.getDownloadedBytesPerSecond()) + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0剩余：" + this.getEtaText(context, downloadNotification.getEtaInMilliSeconds());
         }
 
         return var10000;
@@ -482,6 +482,28 @@ public abstract class MyDefaultFetchNotificationManager implements FetchNotifica
         }
 
         return var10000;
+    }
+
+    private final String getSpeedText(Context context, long downloadedBytesPerSecond) {
+        long mSpeed = downloadedBytesPerSecond / (long) (1024 * 1024);
+        long kSpeed = downloadedBytesPerSecond / (long) 1024;
+        String var10000;
+        if (mSpeed > 1L) {
+            var10000 = String.valueOf(mSpeed) + "MB/s";
+        } else if (kSpeed > 1L) {
+            var10000 = String.valueOf(kSpeed) + "KB/s";
+        } else {
+            var10000 = String.valueOf(downloadedBytesPerSecond) + "B/s";;
+        }
+        return var10000;
+    }
+
+    private final String getProgress(Context context, long total,long download) {
+        if(total == 0) {
+            return "0%";
+        }
+        int progress = (int)((((double)download) / total) * 100);
+        return String.valueOf(progress)+"%";
     }
 
     public MyDefaultFetchNotificationManager(@NotNull Context context) {

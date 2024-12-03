@@ -4,6 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 
 import androidx.annotation.NonNull;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
@@ -23,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -45,12 +50,15 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     /// when the Flutter Engine is detached from the Activity
     private MethodChannel channel;
     private Context context;
-    private Fetch fetchInstance;
+    public static Fetch fetchInstance;
+    public static WorkManager workManager;
     FetchConfiguration.Builder fetchConfigBuilder;
     OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
     private EventChannel eventChannel;
     private EventChannel.EventSink updateEventSink;
+
+    private FetchListener fetchListener;
 
 
     @Override
@@ -66,7 +74,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             public void onListen(Object arguments, EventChannel.EventSink events) {
                 updateEventSink = events;
                 if (fetchInstance.getListenerSet().size() == 0) {
-                    fetchInstance.addListener(new FetchListener(updateEventSink, fetchInstance));
+                    fetchListener = new FetchListener(updateEventSink, fetchInstance);
+                    fetchInstance.addListener(fetchListener);
                 }
             }
 
@@ -123,31 +132,32 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     }
 
     private void setSettings(MethodCall methodCall, Result result) {
-        Boolean onlyWiFi = methodCall.argument("onlyWiFi");
-        NetworkType networkType = onlyWiFi ? NetworkType.WIFI_ONLY : NetworkType.ALL;
-        OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
-        fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
-                .enableLogging(n(methodCall.argument("loggingEnabled"), true))
-                .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 0))
-                .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
-                .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
-                .setGlobalNetworkType(networkType)
-                .setNotificationManager(notificationManager).setHttpDownloader(
-                        new OkHttpDownloader(
-                                okHttpClient,
-                                Downloader.FileDownloaderType.PARALLEL
-                        )
-                );
+        if(fetchInstance == null) {
+            Log.d(FetchmePlugin.class.getName(), "Fetch 初始化!");
+            Boolean onlyWiFi = methodCall.argument("onlyWiFi");
+            NetworkType networkType = onlyWiFi ? NetworkType.WIFI_ONLY : NetworkType.ALL;
+            OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
+            fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
+                    .enableLogging(n(methodCall.argument("loggingEnabled"), true))
+                    .setAutoRetryMaxAttempts(n(methodCall.argument("autoRetryAttempts"), 0))
+                    .setDownloadConcurrentLimit(n(methodCall.argument("concurrentDownloads"), 3))
+                    .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
+                    .setGlobalNetworkType(networkType)
+                    .setNotificationManager(notificationManager).setHttpDownloader(
+                            new OkHttpDownloader(
+                                    okHttpClient,
+                                    Downloader.FileDownloaderType.PARALLEL
+                            )
+                    );
 //                .setHttpDownloader(new OkHttpDownloader(okHttpClient));
-        FetchConfiguration fetchConfiguration = fetchConfigBuilder
-                .build();
+            FetchConfiguration fetchConfiguration = fetchConfigBuilder
+                    .build();
 
-        fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
-        fetchInstance.pauseAll();
+            fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
+            fetchInstance.pauseAll();
+        }
         Log.d(FetchmePlugin.class.getName(), "Fetch reset configuration!");
-
         result.success(null);
-
     }
 
     private void updateRequest(MethodCall call, Result result) {
@@ -254,6 +264,26 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
         Log.d("Fetchme", "Enqueued the url :" + url);
     }
 
+    private void scheduleBackgroundDownloader() {
+        if(workManager == null) {
+            Log.d("Fetchme", "初始化Fetch Worker");
+            Data inputData = (new Data.Builder()).build();
+            Constraints constraints = (new Constraints.Builder())
+                    .setRequiresStorageNotLow(true)
+                    .setRequiresBatteryNotLow(true)
+                    .build();
+            Class<FileDownloadWorker> fileDownloadWorkerClass = FileDownloadWorker.class;
+            PeriodicWorkRequest workRequest = new PeriodicWorkRequest.Builder(fileDownloadWorkerClass,
+                    15, TimeUnit.MINUTES) //CHANGE THIS TIME TO A SHORTER TIME FOR TESTING
+                    .setConstraints(constraints)
+                    .addTag("FileDownloadWorker")
+                    .setInputData(inputData)
+                    .build();
+            workManager = WorkManager.getInstance(context);
+            workManager.enqueue(workRequest);
+        }
+    }
+
     private void initialize(MethodCall methodCall, Result result) {
 
         fetchConfigBuilder = new FetchConfiguration.Builder(this.context)
@@ -317,6 +347,10 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         channel.setMethodCallHandler(null);
+        if(fetchListener != null) {
+            fetchInstance.removeListener(fetchListener);
+        }
+        scheduleBackgroundDownloader();
     }
 
     private <T> T n(T t1, T t2) {
