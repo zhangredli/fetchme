@@ -35,18 +35,21 @@ class DownloadItem {
   final String fileName;
   final int downloaded;
   final int total;
+  final int etaInMilliSeconds;
   final DownloadTaskStatus status;
   final int downloadedBytesPerSecond;
   final bool startDownloadImmediately;
 
-  DownloadItem({required this.id,
-    required this.url,
-    required this.fileName,
-    required this.downloaded,
-    required this.total,
-    required this.status,
-    required this.downloadedBytesPerSecond,
-    required this.startDownloadImmediately});
+  DownloadItem(
+      {required this.id,
+      required this.url,
+      required this.fileName,
+      required this.downloaded,
+      required this.total,
+      required this.etaInMilliSeconds,
+      required this.status,
+      required this.downloadedBytesPerSecond,
+      required this.startDownloadImmediately});
 
   Map<String, Object> toMap() {
     Map<String, Object> map = {};
@@ -56,6 +59,7 @@ class DownloadItem {
     map.putIfAbsent("fileName", () => fileName);
     map.putIfAbsent("downloaded", () => downloaded);
     map.putIfAbsent("total", () => total);
+    map.putIfAbsent("etaInMilliSeconds", () => etaInMilliSeconds);
     map.putIfAbsent("DownloadTaskStatus", () => status.value);
     map.putIfAbsent("downloadedBytesPerSecond", () => downloadedBytesPerSecond);
     map.putIfAbsent("startDownloadImmediately", () => startDownloadImmediately);
@@ -70,12 +74,12 @@ class DownloadItem {
         fileName: map['fileName'],
         downloaded: map['downloaded'],
         total: map['total'] as int,
+        etaInMilliSeconds: map['etaInMilliSeconds'] as int,
         status: DownloadTaskStatus.from(map['status'] as int),
         downloadedBytesPerSecond: map['downloadedBytesPerSecond'] as int,
         startDownloadImmediately: map['startDownloadImmediately'] as bool);
   }
 }
-
 
 enum FetchError {
   unknown,
@@ -110,8 +114,8 @@ enum FetchError {
   fileAllocationFailed,
   httpConnectionNotAllowed
 }
-extension _ErrorExt on FetchError{
 
+extension _ErrorExt on FetchError {
   FetchError getByCode(int code) {
     switch (code) {
       case -1:

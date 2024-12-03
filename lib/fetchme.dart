@@ -11,17 +11,18 @@ export 'src/models.dart';
 class Fetchme {
   static const MethodChannel _channel = MethodChannel('fetchme');
   static const EventChannel _eventChannel =
-  EventChannel("net.omidn.fetchme/downloadProgressEventStream");
+      EventChannel("net.omidn.fetchme/downloadProgressEventStream");
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');
     return version;
   }
 
-  static Future<void> initialize({bool loggingEnabled = true,
-    int autoRetryAttemps = 1,
-    int concurrentDownloads = 3,
-    int progressInterval = 1500}) async {
+  static Future<void> initialize(
+      {bool loggingEnabled = true,
+      int autoRetryAttemps = 1,
+      int concurrentDownloads = 3,
+      int progressInterval = 1500}) async {
     await _channel.invokeMethod("initialize", {
       "loggingEnabled": loggingEnabled,
       "autoRetryAttempts": autoRetryAttemps,
@@ -30,12 +31,13 @@ class Fetchme {
     });
   }
 
-  static Future<void> setSettings({bool loggingEnabled = true,
-    int autoRetryAttemps = 1,
-    int concurrentDownloads = 3,
-    bool onlyWiFi = false,
-    int progressInterval = 1500,
-    bool onlySendFinishNotification = false}) async {
+  static Future<void> setSettings(
+      {bool loggingEnabled = true,
+      int autoRetryAttemps = 1,
+      int concurrentDownloads = 3,
+      bool onlyWiFi = false,
+      int progressInterval = 1500,
+      bool onlySendFinishNotification = false}) async {
     await _channel.invokeMethod('setSettings', {
       "onlyWiFi": onlyWiFi,
       "onlySendFinishNotification": onlySendFinishNotification,
@@ -61,17 +63,20 @@ class Fetchme {
     return DownloadItem.fromMap(await _channel.invokeMethod("getDownloadItem"));
   }
 
-  static Future<int> enqueue(String url,
-      String savedDir,
-      String? fileName, {
-        bool showNotification = true,
-        bool openFileFromNotification = true,
-        bool requiresStorageNotLow = true,
-      }) async {
+  static Future<int> enqueue(
+    String url,
+    String savedDir,
+    String? fileName, {
+    String title = "",
+    bool showNotification = true,
+    bool openFileFromNotification = true,
+    bool requiresStorageNotLow = true,
+  }) async {
     return await _channel.invokeMethod('enqueue', {
       'url': url,
       'saveDir': savedDir,
       'fileName': fileName,
+      'title': title,
       'showNotification': showNotification,
       'openFileFromNotification': openFileFromNotification,
       'requiresStorageNotLow': requiresStorageNotLow,
@@ -136,10 +141,9 @@ class Fetchme {
   }
 
   static Future<DownloadItem> updateLink(
-      {required int id, required String newLink }) async {
+      {required int id, required String newLink}) async {
     print("updating link to : " + newLink);
-    return DownloadItem.fromMap(
-        await _channel.invokeMethod(
-            'updateRequest', {'id': id, 'newUrl': newLink}));
-    }
+    return DownloadItem.fromMap(await _channel
+        .invokeMethod('updateRequest', {'id': id, 'newUrl': newLink}));
+  }
 }

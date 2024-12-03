@@ -7,7 +7,7 @@ public class DownloadItemMapper {
     public static DownloadItem mapToDownloadItem(Download download) {
         return new DownloadItem(download.getId(), download.getUrl(),
                 download.getFile(), download.getDownloaded(),
-                download.getTotal(), download.getStatus(), download.getDownloadedBytesPerSecond(), download.getDownloadOnEnqueue());
+                download.getTotal(), download.getStatus(), download.getDownloadedBytesPerSecond(), download.getDownloadOnEnqueue(), download.getEtaInMilliSeconds());
     }
 
 }

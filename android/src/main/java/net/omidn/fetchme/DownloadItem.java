@@ -12,11 +12,12 @@ public class DownloadItem {
     private String fileName;
     private long downloaded;
     private long total;
+    private long etaInMilliSeconds;
     private Status status;
     private long downloadedBytesPerSecond;
     private boolean startDownloadImmediately;
 
-    public DownloadItem(int id, String url, String fileName, long downloaded, long total, Status status, long downloadedBytesPerSecond, boolean startDownloadImediately) {
+    public DownloadItem(int id, String url, String fileName, long downloaded, long total, Status status, long downloadedBytesPerSecond, boolean startDownloadImediately,long etaInMilliSeconds) {
         this.id = id;
         this.url = url;
         this.fileName = fileName;
@@ -25,6 +26,7 @@ public class DownloadItem {
         this.status = status;
         this.downloadedBytesPerSecond = downloadedBytesPerSecond;
         this.startDownloadImmediately = startDownloadImediately;
+        this.etaInMilliSeconds = etaInMilliSeconds;
     }
 
     public int getId() {
@@ -58,6 +60,9 @@ public class DownloadItem {
     public boolean isStartDownloadImmediately() {
         return startDownloadImmediately;
     }
+    public long getEtaInMilliSeconds() {
+        return etaInMilliSeconds;
+    }
 
     public Map<String, Object> toMap(){
         Map<String, Object> map = new HashMap<>();
@@ -70,6 +75,7 @@ public class DownloadItem {
         map.put("status", status.getValue());
         map.put("downloadedBytesPerSecond", downloadedBytesPerSecond);
         map.put("startDownloadImmediately", startDownloadImmediately);
+        map.put("etaInMilliSeconds", etaInMilliSeconds);
 
         return map;
     }

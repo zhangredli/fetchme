@@ -418,6 +418,10 @@ public abstract class MyDefaultFetchNotificationManager implements FetchNotifica
     @NotNull
     public String getDownloadNotificationTitle(@NotNull Download download) {
         Intrinsics.checkNotNullParameter(download, "download");
+        String title = download.getExtras() != null ? download.getExtras().getString("title","") : "";
+        if(!title.isEmpty()) {
+            return title;
+        }
         String var10000 = download.getFileUri().getLastPathSegment();
         if (var10000 == null) {
             Uri var2 = Uri.parse(download.getUrl());
