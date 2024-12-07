@@ -14,6 +14,7 @@ import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.FetchNotificationManager;
+import com.tonyodev.fetch2.HttpUrlConnectionDownloader;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
 import com.tonyodev.fetch2core.Downloader;
@@ -144,10 +145,11 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
                     .setProgressReportingInterval(n(methodCall.argument("progressInterval"), 1500))
                     .setGlobalNetworkType(networkType)
                     .setNotificationManager(notificationManager).setHttpDownloader(
-                            new OkHttpDownloader(
-                                    okHttpClient,
-                                    Downloader.FileDownloaderType.PARALLEL
-                            )
+                            new CustomHttpUrlConnectionDownloader(Downloader.FileDownloaderType.PARALLEL)
+//                            new OkHttpDownloader(
+//                                    okHttpClient,
+//                                    Downloader.FileDownloaderType.PARALLEL
+//                            )
                     );
 //                .setHttpDownloader(new OkHttpDownloader(okHttpClient));
             FetchConfiguration fetchConfiguration = fetchConfigBuilder
