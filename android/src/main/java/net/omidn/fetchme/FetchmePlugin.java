@@ -74,10 +74,8 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
             @Override
             public void onListen(Object arguments, EventChannel.EventSink events) {
                 updateEventSink = events;
-                if (fetchInstance.getListenerSet().size() == 0) {
-                    fetchListener = new FetchListener(updateEventSink, fetchInstance);
-                    fetchInstance.addListener(fetchListener);
-                }
+                fetchListener = new FetchListener(updateEventSink, fetchInstance);
+                fetchInstance.addListener(fetchListener);
             }
 
             @Override
