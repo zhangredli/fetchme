@@ -2,6 +2,7 @@ package net.omidn.fetchme;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.work.Constraints;
@@ -17,10 +18,15 @@ import com.tonyodev.fetch2.FetchNotificationManager;
 import com.tonyodev.fetch2.HttpUrlConnectionDownloader;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.database.DownloadInfo;
+import com.tonyodev.fetch2.database.FetchDatabaseManagerWrapper;
+import com.tonyodev.fetch2.fetch.FetchImpl;
 import com.tonyodev.fetch2core.Downloader;
 import com.tonyodev.fetch2core.Extras;
 import com.tonyodev.fetch2core.Func;
+import com.tonyodev.fetch2core.HandlerWrapper;
 import com.tonyodev.fetch2okhttp.OkHttpDownloader;
+import com.tonyodev.fetch2.fetch.FetchModulesBuilder;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +43,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import kotlin.Unit;
 import okhttp3.OkHttpClient;
 
 /**
@@ -60,6 +67,9 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     private EventChannel.EventSink updateEventSink;
 
     private FetchListener fetchListener;
+    private FetchDatabaseManagerWrapper fetchDatabaseManagerWrapper;
+    private HandlerWrapper handlerWrapper;
+    private Handler uiHandler;
 
 
     @Override
@@ -152,8 +162,12 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
 //                .setHttpDownloader(new OkHttpDownloader(okHttpClient));
             FetchConfiguration fetchConfiguration = fetchConfigBuilder
                     .build();
-
-            fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
+            FetchModulesBuilder.Modules modules = FetchModulesBuilder.INSTANCE.buildModulesFromPrefs(fetchConfiguration);
+            fetchDatabaseManagerWrapper = modules.getFetchDatabaseManagerWrapper();
+            handlerWrapper = modules.getHandlerWrapper();
+            uiHandler = modules.getUiHandler();
+            fetchInstance = FetchImpl.newInstance(modules);
+            //fetchInstance = Fetch.Impl.getInstance(fetchConfiguration);
             fetchInstance.pauseAll();
         }
         Log.d(FetchmePlugin.class.getName(), "Fetch reset configuration!");
@@ -161,26 +175,47 @@ public class FetchmePlugin implements FlutterPlugin, MethodCallHandler {
     }
 
     private void updateRequest(MethodCall call, Result result) {
-        fetchInstance.getDownload(call.argument("id"), download -> {
-            // url error.
-            android.util.Log.d("Fetchme", "updateRequest: called");
-            String newUrl = call.argument("newUrl");
-            Request request = new Request(newUrl, download.getFile());
-            //update other request fields.
-            fetchInstance.updateRequest(download.getId(), request, true, new Func<Download>() {
-                @Override
-                public void call(@NotNull Download newDownload) {
-                    android.util.Log.d("Fetchme", "download id: new(" + newDownload.getId() + ")  old(" + download.getId() + ")");
-                    result.success(DownloadItemMapper.mapToDownloadItem(newDownload).toMap());
+        android.util.Log.d("Fetchme", "updateRequest: called");
+        int id = call.argument("id");
+        String newUrl = call.argument("newUrl");
+        try {
+            handlerWrapper.post(() -> {
+                try {
+                    DownloadInfo download = fetchDatabaseManagerWrapper.get(id);
+                    download.setUrl(newUrl);
+                    fetchDatabaseManagerWrapper.update(download);
+                    uiHandler.post(()-> {
+                        result.success(DownloadItemMapper.mapToDownloadItem(download).toMap());
+                    });
+                } catch (Exception e) {
+                    result.error("updateRequest error", e.getMessage(), e.toString());
                 }
-            }, new Func<Error>() {
-                @Override
-                public void call(@NotNull Error err) {
-                    result.error(err.getValue() + "", err.name(), err);
-                    //failed to update
-                }
+                return Unit.INSTANCE;
             });
-        });
+        } catch (Exception e) {
+            result.error("updateRequest error", e.getMessage(), e.toString());
+        }
+//        fetchInstance.getDownload(call.argument("id"), download -> {
+//            // url error.
+//            android.util.Log.d("Fetchme", "updateRequest: called");
+//            String newUrl = call.argument("newUrl");
+//            fetchDatabaseManagerWrapper.get(call.argument("id"))
+//            Request request = new Request(newUrl, download.getFile());
+//            //update other request fields.
+//            fetchInstance.updateRequest(download.getId(), request, true, new Func<Download>() {
+//                @Override
+//                public void call(@NotNull Download newDownload) {
+//                    android.util.Log.d("Fetchme", "download id: new(" + newDownload.getId() + ")  old(" + download.getId() + ")");
+//                    result.success(DownloadItemMapper.mapToDownloadItem(newDownload).toMap());
+//                }
+//            }, new Func<Error>() {
+//                @Override
+//                public void call(@NotNull Error err) {
+//                    result.error(err.getValue() + "", err.name(), err);
+//                    //failed to update
+//                }
+//            });
+//        });
     }
 
     private static class MYCD extends OkHttpDownloader {
